@@ -1,0 +1,8 @@
+Table,Field,Description
+names,State,State (abbreviation) where the babies were born
+names,Gender,Gender of the babies at birth
+names,Year,Year the babies were born
+names,Name,Name given to the babies
+names,Births,Number of babies given a name for a specific state & gender & year
+regions,State,State (abbreviation) in the United States
+regions,Region,Region of the United States that the state is located in
