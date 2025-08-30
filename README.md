@@ -154,5 +154,92 @@ popular_boys AS (
     SELECT Year, Name,
            ROW_NUMBER() OVER (PARTITION BY Year ORDER BY number_births DESC) AS popularity
     FROM boys_names
+🔹 Biggest Jumps in Popularity
+WITH ranked_names AS (
+  SELECT Name, Gender, Year,
+         ROW_NUMBER() OVER (PARTITION BY Year, Gender ORDER BY SUM(Births) DESC) AS rank
+  FROM names
+  GROUP BY Name, Gender, Year
+),
+rank_change AS (
+  SELECT Name, Gender,
+         MIN(CASE WHEN Year = 1910 THEN rank END) AS rank_start,
+         MAX(CASE WHEN Year = 2015 THEN rank END) AS rank_end
+  FROM ranked_names
+  GROUP BY Name, Gender
+)
+SELECT Name, Gender, (rank_start - rank_end) AS jump
+FROM rank_change
+ORDER BY jump DESC;
+
+🔹 Top 3 Names Per Year
+WITH yearly_rank AS (
+  SELECT Year, Name, Gender,
+         ROW_NUMBER() OVER (PARTITION BY Year, Gender ORDER BY SUM(Births) DESC) AS rank
+  FROM names
+  GROUP BY Year, Name, Gender
+)
+SELECT Year, Name, Gender, rank
+FROM yearly_rank
+WHERE rank <= 3
+ORDER BY Year, Gender, rank;
+
+🔹 Top 3 Names Per Decade
+WITH decade_rank AS (
+  SELECT (Year/10)*10 AS decade, Name, Gender,
+         ROW_NUMBER() OVER (PARTITION BY (Year/10)*10, Gender ORDER BY SUM(Births) DESC) AS rank
+  FROM names
+  GROUP BY (Year/10)*10, Name, Gender
+)
+SELECT decade, Name, Gender, rank
+FROM decade_rank
+WHERE rank <= 3
+ORDER BY decade, Gender, rank;
+
+🔹 Regional Distribution
+SELECT r.Region, n.Name, SUM(n.Births) AS total_births
+FROM names n
+JOIN regions r ON n.State = r.State
+GROUP BY r.Region, n.Name
+ORDER BY r.Region, total_births DESC;
+
+🔹 Top 10 Androgynous Names
+WITH gender_totals AS (
+  SELECT Name, Gender, SUM(Births) AS total_births
+  FROM names
+  GROUP BY Name, Gender
+),
+pivoted AS (
+  SELECT Name,
+         SUM(CASE WHEN Gender = 'M' THEN total_births ELSE 0 END) AS male_births,
+         SUM(CASE WHEN Gender = 'F' THEN total_births ELSE 0 END) AS female_births
+  FROM gender_totals
+  GROUP BY Name
+)
+SELECT TOP 10 Name, male_births, female_births
+FROM pivoted
+WHERE male_births > 0 AND female_births > 0
+ORDER BY ABS(male_births - female_births);
+
+🔹 Shortest and Longest Names
+SELECT TOP 10 Name, SUM(Births) AS total_births, LEN(Name) AS name_length
+FROM names
+GROUP BY Name
+ORDER BY LEN(Name) ASC, total_births DESC;
+
+SELECT TOP 10 Name, SUM(Births) AS total_births, LEN(Name) AS name_length
+FROM names
+GROUP BY Name
+ORDER BY LEN(Name) DESC, total_births DESC;
+
+🔹 States with Highest % of “Chris”
+SELECT State,
+       SUM(Births) AS total_state_births,
+       SUM(CASE WHEN Name = 'Chris' THEN Births ELSE 0 END) AS chris_births,
+       CAST(SUM(CASE WHEN Name = 'Chris' THEN Births ELSE 0 END) * 100.0 /
+            SUM(Births) AS DECIMAL(5,2)) AS chris_percentage
+FROM names
+GROUP BY State
+ORDER BY chris_percentage DESC;
 )
 SELECT * FROM popular_boys WHERE Name = 'Michael';
