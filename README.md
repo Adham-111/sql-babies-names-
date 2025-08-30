@@ -66,8 +66,6 @@ CREATE TABLE names_staging (
   Births NVARCHAR(100)
 );
 2️⃣ Load Data from CSV
-sql
-Copy code
 -- Insert data into staging table
 BULK INSERT names_staging
 FROM 'D:\project retail\US+Baby+Names+MySQL (1)\names_data.csv'
@@ -77,7 +75,7 @@ WITH (
     FIRSTROW = 2,
     CODEPAGE = '65001',
     TABLOCK
-);
+); 
 
 -- Clean data and move into final table
 INSERT INTO names (State, Gender, Year, Name, Births)
@@ -88,7 +86,7 @@ SELECT
     Name,
     ISNULL(TRY_CAST(REPLACE(Births, ',', '') AS INT), 0)
 FROM names_staging;
-   3️⃣ Create Regions Table
+  3️⃣ Create Regions Table
    CREATE TABLE regions (
   State CHAR(2),
   Region VARCHAR(45)
